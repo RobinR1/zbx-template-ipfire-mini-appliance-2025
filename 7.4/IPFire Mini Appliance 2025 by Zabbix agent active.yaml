@@ -1,0 +1,147 @@
+zabbix_export:
+  version: '7.4'
+  template_groups:
+    - uuid: e960332b3f6c46a1956486d4f3f99fce
+      name: 'Templates/Server hardware'
+  templates:
+    - uuid: 3520422a45f14906abeff223327cd896
+      template: 'IPFire Mini Appliance 2025 by Zabbix agent active'
+      name: 'IPFire Mini Appliance 2025 by Zabbix agent active'
+      description: |
+        Monitor an IPFire mini hardware appliance (2nd gen (2025))
+        
+        Requirements for template operation:
+        Install and configure IPFire zabbix_agentd addon.
+        See: https://www.ipfire.org/docs/addons/zabbix_agentd for details
+        
+        Created by Robin Roevens (robin.roevens (at) disroot.org)
+      vendor:
+        name: RobinR1
+        version: 7.4-0.1
+      groups:
+        - name: 'Templates/Server hardware'
+      items:
+        - uuid: c931bfa1d850402099c4456af3370f3f
+          name: 'BIOS Release Date'
+          type: DEPENDENT
+          key: ipfire_appliance_v2.bios.release_date
+          value_type: CHAR
+          description: 'HW mainboard BIOS release date'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[''Release Date'']'
+          master_item:
+            key: ipfire_appliance_v2.firmware.info
+          tags:
+            - tag: component
+              value: device
+            - tag: component
+              value: system
+        - uuid: d06e807c4dd4402cb13283613174d9c3
+          name: 'BIOS Revision'
+          type: DEPENDENT
+          key: ipfire_appliance_v2.bios.revision
+          value_type: CHAR
+          description: 'HW mainboard BIOS revision'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[''BIOS Revision'']'
+          master_item:
+            key: ipfire_appliance_v2.firmware.info
+          tags:
+            - tag: component
+              value: device
+            - tag: component
+              value: system
+        - uuid: c3b49922b5e94764ab742b888eccd326
+          name: 'BIOS Vendor'
+          type: DEPENDENT
+          key: ipfire_appliance_v2.bios.vendor
+          value_type: CHAR
+          description: 'HW mainboard BIOS vendor'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[''Vendor'']'
+          master_item:
+            key: ipfire_appliance_v2.firmware.info
+          tags:
+            - tag: component
+              value: device
+            - tag: component
+              value: system
+        - uuid: f3aa3aae0f484018b8c9d1b5f2020f66
+          name: 'BIOS Version'
+          type: DEPENDENT
+          key: ipfire_appliance_v2.bios.version
+          value_type: CHAR
+          description: 'HW mainboard BIOS version string'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[''Version'']'
+          master_item:
+            key: ipfire_appliance_v2.firmware.info
+          tags:
+            - tag: component
+              value: device
+            - tag: component
+              value: system
+        - uuid: a41eee87b24e4a1ea0aff832dcac4edb
+          name: 'BIOS information'
+          type: ZABBIX_ACTIVE
+          key: ipfire_appliance_v2.firmware.info
+          delay: 1h
+          history: '0'
+          value_type: CHAR
+          description: 'IPFire Mini Appliance (2014) firmware information master item'
+          preprocessing:
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          tags:
+            - tag: component
+              value: raw
+        - uuid: 5b0d2c57fa6a4e239a6d8375ed1438b8
+          name: 'CPU temperature'
+          type: ZABBIX_ACTIVE
+          key: 'sensor[coretemp-isa-0000,temp1]'
+          value_type: FLOAT
+          units: °C
+          tags:
+            - tag: component
+              value: cpu
+            - tag: component
+              value: sensor
+          triggers:
+            - uuid: c3e26fcc1a3b4eccba83812a3e5924d5
+              expression: 'last(/IPFire Mini Appliance 2025 by Zabbix agent active/sensor[coretemp-isa-0000,temp1])>={$CPU.TEMP.CRIT}'
+              name: 'CPU temperature CRITICAL'
+              priority: HIGH
+              tags:
+                - tag: scope
+                  value: availability
+            - uuid: e61a2094f17d4e85a7b45064c0163ce3
+              expression: 'last(/IPFire Mini Appliance 2025 by Zabbix agent active/sensor[coretemp-isa-0000,temp1])>={$CPU.TEMP.WARN}'
+              name: 'CPU temperature too high'
+              priority: WARNING
+              dependencies:
+                - name: 'CPU temperature CRITICAL'
+                  expression: 'last(/IPFire Mini Appliance 2025 by Zabbix agent active/sensor[coretemp-isa-0000,temp1])>={$CPU.TEMP.CRIT}'
+              tags:
+                - tag: scope
+                  value: availability
+      tags:
+        - tag: class
+          value: device
+        - tag: target
+          value: 'ipfire mini appliance'
+      macros:
+        - macro: '{$CPU.TEMP.CRIT}'
+          value: '105'
+          description: 'Critical CPU temperature'
+        - macro: '{$CPU.TEMP.WARN}'
+          value: '70'
+          description: 'High CPU temperature warning'
